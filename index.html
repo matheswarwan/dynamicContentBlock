@@ -1,0 +1,43 @@
+<html>
+  <head>
+    <link rel="preconnect" href="https://fonts.gstatic.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code&display=swap" rel="stylesheet"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="css/custom.css" />
+    <script src="https://code.jquery.com/jquery-3.6.1.js" integrity="sha256-3zlB5s2uwoUzrXK3BT7AX3FyvojsraNFxCc2vC/7pNI=" crossorigin="anonymous"></script>
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/mustache.js/4.2.0/mustache.min.js" integrity="sha512-CswfmQmJj8DXhm29Qc5eLk5//2EW1CaI6de+RmRhSrWrXRhkBQ3795tuwJvT6DK6EF4IVqJIRmBg8EokL6c87g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script> -->
+    <script src="https://unpkg.com/mustache@latest"></script>
+    <script src="js/mjml.js"></script>
+    <script src="js/blocksdk.js"></script>
+    <script src="js/helper.js"></script>
+  </head>
+  <body>
+    <div id="page1">
+      <h3>Select Asset</h3>
+      <select id="assetDropdownList">
+      </select>
+      <input type="button" id="p1nxt" class="nxtBtn" value="Next">
+    </div>
+    <div id="page2">
+        <h3>Configure fields</h3>
+        <div id="p2ErrorMessage"></div>
+        <form id="configFields" style="padding: 20px"></form>
+        <!--<label for="p2ImageURL">Enter Image URL</label>
+        <input type="text" id="p2ImageURL" value=""> -->
+        <input type="button" id="p2back" class="backBtn" value="Back">
+        <input type="button" id="p2nxt" class="nxtBtn" value="Next">
+    </div>
+    <div id="page3">
+    <h3>Preview Content</h3>
+    <div id="completeMessage">You'll see preview here</div>
+    <input type="button" id="p3back" class="backBtn" value="Back">
+    <input type="button" id="p3done" class="nxtBtn" value="Complete">
+    </div>
+
+    <!-- hidden fields -->
+    <input type="hidden" id="showp1" value=true />
+    <input type="hidden" id="showp2" value=false />
+    <input type="hidden" id="showp3" value=false />
+  </body>
+
+</html>
