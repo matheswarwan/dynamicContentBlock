@@ -10,7 +10,6 @@ var sdk = new window.sfdc.BlockSDK({
         "stylingblock"
     ]
     });
-    
 
 $(document).ready(showPages);
 
@@ -71,9 +70,38 @@ function showPages(){
             console.log('clicked back button - ' + $(this).attr('id')); 
         }); 
     });
+
+    //Set SDK Data on pageload
+    sdk.getData(function(data){
+        console.log('1. data on pageload.')
+        console.log(data)
+        if(data.hasOwnProperty('selectedAssetIndex')) {
+            console.log('Asset preselected.');
+            $('#assetDropdownList').prop('selectedIndex', data['selectedAssetIndex'])
+            //TODO: This doesn't seem to work
+        }
+
+        if(data.hasOwnProperty('step3')) {
+            console.log(data['step3']['msAttr']);
+            var msAttr = data['step3']['msAttr'];
+            var keys = Object.keys(msAttr)
+            for(var k in keys) {
+                console.log(keys[k] + ' -- ' + msAttr[keys[k]]);
+                $(keys[k]).val(msAttr[keys[k]]);
+            }
+        }
+    });
 }
 
 function loadPage2(){
+    /* Store data from page 1 */
+    sdk.getData(function(data){
+        if(data.hasOwnProperty('selectedAssetIndex')) {
+            var t = {};
+            t['selectedAssetIndex'] = $('#assetDropdownList').prop('selectedIndex');
+            sdk.setData(t);
+        }
+    });
     
     //Clean the page 
     $('#configFields').html('');
@@ -119,6 +147,35 @@ function loadPage2(){
         //Add element 
         $('#configFields').append(newElement);
     }
+
+
+    /* Set SDK Values */
+    /* var sdkData = {};
+    sdkData['selectedAssetIndex'] = selectedAssetIndex;
+    console.log('Step 2 - Set sdkData: ')
+    console.log(sdkData)
+    sdk.setData(sdkData);    
+    */
+    //Set SDK Data on pageload
+    sdk.getData(function(data){
+    console.log('1. data on pageload.')
+    console.log(data)
+    if(data.hasOwnProperty('selectedAssetIndex')) {
+        console.log('Asset preselected.');
+        $('#assetDropdownList').prop('selectedIndex', data['selectedAssetIndex'])
+        //TODO: This doesn't seem to work
+    }
+
+    if(data.hasOwnProperty('step3')) {
+        console.log(data['step3']['msAttr']);
+        var msAttr = data['step3']['msAttr'];
+        var keys = Object.keys(msAttr)
+        for(var k in keys) {
+            console.log(keys[k] + ' -- ' + msAttr[keys[k]]);
+            $(keys[k]).val(msAttr[keys[k]]);
+        }
+    }
+});
 }
 
 function createTextField(field){
@@ -217,6 +274,16 @@ function createButtonField(field){
     return parentDiv;
 }
 
+function getPage2Data(){
+    var t = {}; 
+    $('#page2 :input').not('#page2 :input[type=button]').each(function(i) { 
+        console.log($(this).val());
+        console.log($(this).attr('id'));
+        t[$(this).val()] = $(this).attr('id');
+    });
+    return t; 
+}
+
 /* 
     Get all entered value
     Set in MJML 
@@ -224,6 +291,18 @@ function createButtonField(field){
     Set in SDK
 */
 function loadPage3(){
+    /* Store data from page 1 */
+    sdk.getData(function(data){
+        //if(data.hasOwnProperty('selectedAssetIndex')) {
+            //data['mk123']
+        var t = {};
+        t['step2'] = getPage2Data();
+        sdk.setData(t);
+        console.log('data saved in page 3')
+        console.log(t)
+        //}
+    });
+
     var msAttr = {};
     var msText = '';
     sdkHTML = '';
@@ -253,6 +332,10 @@ function loadPage3(){
     var output = Mustache.render(msText, msAttr);
     console.log(output)
 
+    /* 
+        TODO: Santise MJML to remove title and meta tags 
+    */
+    
     if(selectedAssetData['isMjml'] == 'True') {
         console.log('Rendering MJML')
         var mjmlOutput = mjml(output);
@@ -278,6 +361,19 @@ function loadPage3(){
     and on page load, reterive all the values and set in the html of the page 
 
     */
+
+    sdk.getData(function(s3sdkData){
+        console.log('Data received on step 3 - s3sdkData');
+        console.log(s3sdkData);
+        s3sdkData['step3'] = {};
+        s3sdkData['step3']['sdkHTML'] = sdkHTML;
+        s3sdkData['step3']['msAttr'] = msAttr;
+
+        console.log('Step 3 - Set s3sdkData: ')
+        console.log(s3sdkData)
+        sdk.setData(s3sdkData);    
+    });
+       
     
 }
 
@@ -292,6 +388,29 @@ async function getAssets() {
     return assetData;
 }
 
+async function getToken() {
+    var tokenEndpoint = 'https://mc.s10.exacttarget.com/cloud/update-token.json';
+    var options = {
+        credentials: "include",
+        mode: "no-cors" 
+    }
+    var getToken = await fetch(tokenEndpoint, options)
+    //var tokenData = getToken.json(); 
+    console.log('Async Functoin');
+    console.log(getToken);
+    return getToken;
+}
+
+function updateSDKOnCompletion() { 
+    sdk.getContent(function (content) {
+        console.log('setting below html to Preview screen');
+        console.log(sdkHTML);
+        sdk.setContent(sdkHTML); 
+    });
+}
+
+
+
 getAssets().then(
     function(assets) { 
         assetsData = assets;
@@ -303,45 +422,32 @@ getAssets().then(
                 text: assets[i]['assetName']
             }));
         }
+        /* if SDK has data - load it */ 
+        //Set SDK Data on pageload
+        sdk.getData(function(data){
+            console.log('getAssets() data on pageload.')
+            console.log(data)
+            if(data.hasOwnProperty('selectedAssetIndex')) {
+                console.log('Asset preselected.');
+                $('#assetDropdownList').prop('selectedIndex', data['selectedAssetIndex'])
+            }
+        }); 
+
     },
+
     function(error){
         console.log('ERROR FETCHING!!')
     }
 );
 
-/*if(htmlOutput.html.length > 0) {
-        htmlOutput.html = sanitiseHtml(htmlOutput.html);
-        //console.log(htmlOutput.html)
-        sdk.getContent(function (content) {
-            sdk.setContent(htmlOutput.html); 
-        });
 
-        sdk.getData(function (data) {
-            data["mjml"] = textAreaContent;
-            data["html"] = htmlOutput.html;
-            sdk.setData(data);
-        });
+getToken().then(
+    function(token) { console.log(token);
 
-        if(htmlOutput.errors.length > 0){
-            document.getElementById("errorMsg").innerHTML = "";
-            document.getElementById("alertBox").style.display = "block";
-            for(e in htmlOutput.errors) {
-            document.getElementById("errorMsg").innerHTML += 'Line #' + htmlOutput.errors[e].line + ": [" + htmlOutput.errors[e].tagName + "] " + htmlOutput.errors[e].message + "<br>";
-            }
-        }
-    } else {
-        document.getElementById("errorMsg").innerHTML = "";
-        document.getElementById("alertBox").style.display = "block";
-        document.getElementById("errorMsg").innerHTML = "[ERROR]: Not a valid MJML document/ component.";
-        for(e in htmlOutput.errors) {
-            document.getElementById("errorMsg").innerHTML += 'Line #' + htmlOutput.errors[e].line + ": [" + htmlOutput.errors[e].tagName + "] " + htmlOutput.errors[e].message + "<br>";
-        }
-    }*/
+    },
 
-function updateSDKOnCompletion() { 
-    sdk.getContent(function (content) {
-        console.log('setting below html to Preview screen');
-        console.log(sdkHTML);
-        sdk.setContent(sdkHTML); 
-    });
-}
+    function(error){
+        console.log(error);
+    }
+);
+
